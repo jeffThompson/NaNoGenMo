@@ -1,7 +1,7 @@
 NaNoGenMo Experiments
 ====
   
-A series of experiments creating algorithmically-generated novels in a month.    
+A series of experiments creating algorithmically-generated novels in a month, created as part of [NaNoGenMo](https://github.com/dariusk/NaNoGenMo).  
   
 **Grid Novel Remix**  
 Crawl through a 2d text grid and remix a novel.
