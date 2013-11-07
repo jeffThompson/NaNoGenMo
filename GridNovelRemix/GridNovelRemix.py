@@ -5,9 +5,20 @@ Jeff Thompson | 2013 | www.jeffreythompson.org
 
 Crawl through and remix a novel. Created for #NaNoGenMo.
 
+An existing text is loaded word-by-word, then organized 
+into a 2D grid. Using a random start position in the grid, 
+the "cursor" is moved up, down, left, or right and that 
+word is added. The process is repeated up to 50k words. 
+
+Random commas, periods, and paragraph breaks are also 
+added along the way.
+
+TO TRY:
++ when word is selected, it is removed (replaced with ''), or skip over to next above, etc
++ convert all words to lowercase (list of proper nouns from text to preserve?)
++ step not just in increments of 1 (1 up/down but further left/right)
+
 TO DO:
-+ 
-+ 
 + 
 
 This project is released under a Creative Commons BY-NC-SA
@@ -19,57 +30,142 @@ import os, re, math, random
 
 input_filename = 'LordOfTheRings.txt'
 #input_filename = 'TaleOfTwoCities.txt'
+#input_filename = 'WarOfWorlds.txt'
+
+word_count = 50000
+allow_repeat = True
+all_lowercase = True
+
 chance_newline = 0.01
 chance_comma = 0.03
-chance_period = 0.05
-word_count = 50000
-no_repeat = False
+chance_period = 0.1
+chance_question = 0.001
 
-output_filename = 'output/' + os.path.splitext(input_filename)[0] + '_AllowRepeat-' + str(no_repeat) + '_' + str(word_count) + 'Words.txt'
+add_dialog_quotes = True
+pronouns = '(he|she|it)'
+pronouns_upper = '(He|She|It)'
+said = '(said|whispered|yelled|commanded|urged|plead|muttered)'
+asked = '(asked|queried|inquired|demanded|begged)'
+
+add_random_chapters = True
+chance_chapter = 0.02
+chapter_equals_new_location = False
+
+add_end_text = True
+
+# not really all articles, but basically words we don't want to end a sentence with
+articles = [ 'a', 'an', 'the', 'and', 'or', 'if', 'of', 'by', 'as' ]
+
+# words to capitalize - list in lowercase! (could include names, places, etc)
+words_to_capitalize = [ 'i' ]
+
+# list of punctuation marks to look for
+punctuation = [ '.', ',', '?', '!' ]
+
+# output files
+output_filename = 'Output/' + os.path.splitext(input_filename)[0] + '_AllowRepeat-' + str(allow_repeat) + '_AllLowercase-' + str(all_lowercase) + '_' + str(word_count) + 'Words.txt'
+step_filename = 'StepFiles/' + os.path.splitext(input_filename)[0] + '_AllowRepeat-' + str(allow_repeat) + '_AllLowercase-' + str(all_lowercase) + '_' + str(word_count) + 'Words.txt'
+words_filename = 'WordLists/' + os.path.splitext(input_filename)[0] + '_WordList.txt'
+
+# other variables (set later)
 words = []
 book = ''
+steps = ''
 capitalize = True
+in_dialog = False
+chapter = 1
 
 # os.system('cls' if os.name=='nt' else 'clear')
-print '\n\n\n'
+print ('\n' * 4)
+
+# create a divider between listings based on size of Terminal window
+columns = 40
+rows, columns = os.popen('stty size', 'r').read().split()
+display_divider = '- ' * (int(columns)/2)
 
 # extract words
-print 'loading words...\n'
-with open(input_filename) as file:
+with open('SourceFiles/' + input_filename) as file:
 	for line in file:
-		l = line.split(' ')
-		for word in l:
-			word = re.sub(r'\W', '', word)
-			if word != '':
-				words.append(word)
+		for word in line.split(' '):
+			word = re.sub(r'[^\'\w]', '', word)				# strip whitespace but leave apostrophes
+			# word = re.sub(r'\W', '', word)					# former version, works for everything but kills apostrophes
+			word = re.sub(r'_', '', word)							# get rid of random _
+			if word.isupper() or all_lowercase:				# if all uppercase, set to lower case instead
+				word = word.lower()
+			if word.lower() in words_to_capitalize:		# if capitalize flag set, set to title case
+				word = word.title()
+			words.append(word)
+		
+		# OPTIONAL VERSION: 
+		# get all words using NLTK - seems to add some weirdness, so probably not the best choice...
+		# requires this import statement: from nltk.tokenize import RegexpTokenizer
+		'''
+		tokenizer = RegexpTokenizer('\w+')
+		for word in tokenizer.tokenize(line):
+			word = re.sub(r'_?!.', '', word)					# replace random leftovers
+			if word.isupper() or all_lowercase:				# if all uppercase, set to lower case instead
+				word = word.lower()
+			if word.lower() in words_to_capitalize:		# if capitalize flag set, set to title case
+				word = word.title()
+			words.append(word)
+		'''
 
-# get grid size
+# get grid size, set random start point
 width = int(math.sqrt(len(words)))
 height = len(words) / width
 for i in range((width*height) - len(words)):
 	words.append('')
-
-x = random.randrange(0,width)
-y = random.randrange(0,height)
+x = random.randrange(0, width)
+y = random.randrange(0, height)
 pos = (y * width) + x
-print 'word count:      ' + str(len(words))
-print 'grid dimensions: ' + str(width) + ' x ' + str(height)
-print 'start coords:    ' + str(x) + ' x ' + str(y)
-print '\n- - - - - -\n'
 
-# iterate!
+# add size and starting data to file
+steps = str(width) + ',' + str(height) + ',' + str(pos)
+
+# title and metadata
+title = 'Grid Remix: ' + re.sub(r'([a-z])([A-Z])', r'\1 \2', input_filename)
+title = re.sub(r'\.txt', '', title)
+book += title.upper() + '\n' + 'An algorithmic novel by Jeff Thompson, created for National Novel Generation Month 2013'
+
+metadata = 'Word count = ' + str(word_count)
+metadata += ', allow word repetition = ' + str(allow_repeat).lower() + ', chance of a new chapter = ' + str(chance_chapter * 100)
+metadata += '%, chance of new paragraph = ' + str(chance_newline * 100) + '%, chance of a comma = ' + str(chance_comma * 100)
+metadata += '%, chance of a period = ' + str(chance_period * 100) + '%, chance of question mark = ' + str(chance_question * 100) + '%'
+book += '\n\n' + metadata + '\n\n\n'
+
+chance_comma = 0.03
+chance_period = 0.1
+chance_question = 0.001
+chance_chapter = 0.02
+
+# iterate and create text!
+if add_random_chapters:
+	book += 'CHAPTER ' + str(chapter)
+	book += ' (' + str(pos % width) + ', ' + str(pos / width) + ')'
+	book += '\n\n'
 for step in range(word_count):
 	# move in random direction (U R D L)
-	if no_repeat:
-		dir = random.randrange(0,4)
+	if allow_repeat:
+		dir = random.randrange(0,5)			# '5' won't do anything, just stay in place :)
 	else:
-		dir = random.randrange(0,5)		# won't do anything, just stay in place
+		dir = random.randrange(0,4)
+	
+	# save steps (lets us draw it out later)
+	steps += str(dir) + '\n'
+	
+	# up
 	if dir == 0:
 		pos -= width
+	
+	# right
 	elif dir == 1:
 		pos += 1
+	
+	# down
 	elif dir == 2:
 		pos += width
+	
+	# left
 	elif dir == 3:
 		pos -= 1
 	
@@ -80,35 +176,87 @@ for step in range(word_count):
 		pos %= word_count
 	
 	# add word to book
-	word = words[pos].replace('_', '')
+	word = words[pos]
 	if capitalize:
 		word = word.title()
 		capitalize = False
 	book += word
-	
+
 	# random punctuation
 	if random.random() < chance_comma:
 		book += ','
-	elif random.random() < chance_period:
+	elif random.random() < chance_period and word.lower() not in articles:
 		book += '.'
+		capitalize = True			
+	elif random.random() < chance_question and word.lower() not in articles:
+		book += '?'
 		capitalize = True
 
-	# random new paragraph (be sure to add a period first)
-	if random.random() < chance_newline:
-		book += '.\n\n'
+	# random new paragraph and chapter
+	if random.random() < chance_newline and word.lower() not in articles:
+		book += '.\n\n'													# be sure to add a period first
+		if random.random() < chance_chapter:		# random chapter
+			chapter += 1
+			book += '\nCHAPTER ' + str(chapter) 
+			if chapter_equals_new_location:
+				book += ' (' + str(pos % width) + ', ' + str(pos / width) + ')'
+				pos = random.randrange(0, len(words))
+			book += '\n\n'				
 		capitalize = True
-	else:
+	elif step < (word_count-1):		# no space at end of book (makes the period look weird)
 		book += ' '
 
 # add a period at the end
-if book[:-2] not in '.,':
+if book[:-2] not in punctuation:
 	book += '.'
+
+# clean up any weirdness (easier than fixing in the code above... a hack, I know)
+book = re.sub(r',+\.+', '.', book)						# , followed by .
+book = re.sub(r'\?+\.+', '?', book)						# ? followed by .
+
+book = re.sub(r'\s+\.+', '.', book)						# space before .
+book = re.sub(r'\s+,+', ',', book)						# space before ,
+
+book = re.sub(r',{2,}', ',', book)						# more than 1 ,
+book = re.sub(r'\.{2,}', '.', book)						# ditto .
+book = re.sub(r'[^\S\r\n]{2,}', ' ', book)		# 2 or more spaces (ignore \n and \r)
+
+# LOTR causes major problems; this may be the lesser of many evils...
+#book = re.sub(r'[^a-zA-Z]\'+', '', book)			# remove ' at start of word
+#book = re.sub(r'\'+[^a-zA-Z]', '', book)			# ditto end of word
+
+# wow, super ugly: remove extra space at the start of paragraphs and capitalize as needed
+book = re.sub(r'\n.*?(\b[a-zA-Z])', lambda pat: '\n' + pat.group(1).upper(), book)
+
+# add quotes around what seems like dialog
+if add_dialog_quotes:
+	book = re.sub(r'\.\W([^\.]*?) ' + pronouns + ' ' + said + '\.', r'.\n\n"\1," \2 \3.\n\n', book)
+	book = re.sub(r'\.\W' + pronouns_upper+ ' ' + said + ' ([^\.]*?)\.', r'.\n\n\1 \2, "\3."\n\n', book)
+
+	book = re.sub(r'\.\W([^\.]*?) ' + pronouns + ' ' + asked + '\.', r'.\n\n"\1?" \2 \3.\n\n', book)
+	book = re.sub(r'\.\W' + pronouns_upper + ' ' + asked + ' ([^\.]*?)\.', r'.\n\n\1 \2, "\3?"\n\n', book)
+
+	book = re.sub(r'"(\b[a-z])', lambda pat: '"' + pat.group(1).upper(), book)
+
+# if specified, add 'END' to book
+if add_end_text:
+	book += '\n\n\n' + 'END'
 
 # print results and save
 print book
 with open(output_filename, 'a') as file:
 	file.write(book)
+with open(step_filename, 'a') as file:
+	file.write(steps)
+with open(words_filename, 'a') as file:
+	for word in words:
+		file.write(word + '\n')
 
 # done!
-print '\n- - - - - -\n'
-print '"' + output_filename + '" saved...\n\nDONE!\n\n\n'
+print '\n' + display_divider + '\n'
+print 'word count:       ' + ('{:,}'.format(len(words)))
+print 'grid dimensions:  ' + str(width) + ' x ' + str(height)
+print 'start coords:     ' + str(x) + ' x ' + str(y)
+print 'chapters created: ' + str(chapter)
+print '\n\nDONE!'
+print ('\n' * 8)
