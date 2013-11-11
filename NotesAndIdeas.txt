@@ -2,3 +2,62 @@
 NOTES + IDEAS
 - - - - - -
 
++ Potential dividers (set in Bodoni Ornaments):
+	- 1fl./$%{
+
++ LOTR first edition is set in Imprint 12pt; however, Iowan Old Style is very similar and
+	probably close enough for this project
+	- font: http://www.myfonts.com/fonts/mti/imprint
+	- evidence: http://www.peterharrington.co.uk/blog/identifying-collecting-tolkien-first-editions
+
++ "Tengwar" or elvish fonts for Black Speech
+	- Ring inscription text:
+		Ash nazg durbatulûk, ash nazg gimbatul,
+		Ash nazg thrakatulûk agh burzum-ishi krimpatul.
+		
+	- http://www.dafont.com/tengwar-annatar.font
+	- http://www.dafont.com/elvish-ring-nfi.font
+
++ Inscription translated
+	- http://www.amagpiesnest.com/source_songs/FOTR/SSring_verse.htm
+	- http://lotr.wikia.com/wiki/Rings_of_Power#Ring_Poem (at very bottom)
+	
++ Black Speech dictionaries
+	- http://www.angelfire.com/ia/orcishnations/englishorcish.html
+	- http://www.thelandofshadow.com/mordorgate/darkdownloads/blackspeech/speech3.htm
+
+	Gakh Nazg -ûr the Golog goth -lata the kil,
+	Three Rings for the Elven-kings under the sky,
+
+	udu -ûr the Shakutarbik goth ulub hajat -ob gund,
+	Seven for the Dwarf-lords in their halls of stone,
+
+	krith -ûr matuurz najor duump -u mat,
+	Nine for Mortal Men doomed to die,
+
+	ash -ûr the burz goth -mab tab burz soli
+	One for the Dark Lord on his dark throne
+
+	-ishi the uzg -ob mordor amal the burguul reg.
+	In the Land of Mordor where the Shadows lie.
+
+	ash Nazg -ûr -u durb tak gith, ash Nazg -u gimb tak,
+	One Ring to rule them all, One Ring to find them,
+
+	ash Nazg -u thrak tak gith, and -ishi the burzum doturog tak,
+	One Ring to bring them all, and in the darkness bind them,
+
+	-ishi the uzg of mordor amal the burguul reg.
+	In the Land of Mordor where the Shadows lie.
+	
+	
+	Nazg gakh uzg gith tak. Nazg. U.
+	Gimb tak -u nazg gimb nazg uzg burz goth. Najor ulub hajat ulub najor ulub najor matuurz. -ishi matuurz najor matuurz -ishi ulub najor goth -ob -u durb -u durb -u tak ash nazg tak nazg burzum mordor amal burzum. Doturog goth burguul reg reg three sky hajat sky.
+	Hajat. ulub najor duump -mab tab burz gith, gith ash gith -u nazg.
+
++ A quick plaigerism search of the first chapter of this text suggests it is pulled from:
+	- A book on the 'anthropology of consciousness' (http://www.scribd.com/doc/61247081/Nature-of-Magic)
+	- An introduction to the New Testament of the Bible (http://www.scribd.com/doc/97670112/Introduction-to-the-New-Testament-Vol-1-1909-Theodor-Zahn)
+	- A novel titled "The Color of His Blood" (http://www.scribd.com/doc/56046861/The-Color-of-His-Blood)
+	- The classic "Wind in the Willows" (http://www.scribd.com/doc/138521616/The-Wind-in-the-Willows)
+	

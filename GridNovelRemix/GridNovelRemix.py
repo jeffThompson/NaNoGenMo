@@ -13,9 +13,10 @@ word is added. The process is repeated up to 50k words.
 Random commas, periods, and paragraph breaks are also 
 added along the way.
 
-TO TRY:
+Most of the code: fixing weird glitches via a LOT of regex.
+
+TO TRY OR CONSIDER:
 + when word is selected, it is removed (replaced with ''), or skip over to next above, etc
-+ convert all words to lowercase (list of proper nouns from text to preserve?)
 + step not just in increments of 1 (1 up/down but further left/right)
 
 TO DO:
@@ -28,13 +29,19 @@ License - feel free to use, but please let me know.
 
 import os, re, math, random
 
-input_filename = 'LordOfTheRings.txt'
+input_filename = 'LOTR_Poem.txt'
+#input_filename = 'LordOfTheRings.txt'
 #input_filename = 'TaleOfTwoCities.txt'
 #input_filename = 'WarOfWorlds.txt'
 
-word_count = 50000
-allow_repeat = True
+capitalize_characters = False
+characters = [ 'frodo', 'baggins', 'sam', 'samwise', 'gamgee', 'merry', 'brandybuck', 'peregrin', 'pip', 'pippin', 'gandalf', 'aragorn', 'legolas', 'gimli', 'denethor', 'boromir', 'faramir', 'galadriel', 'celeborn', 'elrond', 'arwen', 'bilbo', 'theoden', 'eomer', 'eowyn', 'treebeard', 'sauron', 'nazgul', 'saruman', 'grima', 'wormtongue', 'gollum', 'smeagol', 'shelob', 'balrog' ]
+
+word_count = 77
+allow_repeat = False
 all_lowercase = True
+replace_a_an = True
+numbers_as_words = True		# replace 0-19 as text representation
 
 chance_newline = 0.01
 chance_comma = 0.03
@@ -86,6 +93,7 @@ display_divider = '- ' * (int(columns)/2)
 # extract words
 with open('SourceFiles/' + input_filename) as file:
 	for line in file:
+		line = re.sub(r'-', ' ', line)							# change dash to space (avoids some smashed word issues)
 		for word in line.split(' '):
 			word = re.sub(r'[^\'\w]', '', word)				# strip whitespace but leave apostrophes
 			# word = re.sub(r'\W', '', word)					# former version, works for everything but kills apostrophes
@@ -143,6 +151,7 @@ if add_random_chapters:
 	book += 'CHAPTER ' + str(chapter)
 	book += ' (' + str(pos % width) + ', ' + str(pos / width) + ')'
 	book += '\n\n'
+
 for step in range(word_count):
 	# move in random direction (U R D L)
 	if allow_repeat:
@@ -222,11 +231,31 @@ book = re.sub(r'\.{2,}', '.', book)						# ditto .
 book = re.sub(r'[^\S\r\n]{2,}', ' ', book)		# 2 or more spaces (ignore \n and \r)
 
 # LOTR causes major problems; this may be the lesser of many evils...
-#book = re.sub(r'[^a-zA-Z]\'+', '', book)			# remove ' at start of word
-#book = re.sub(r'\'+[^a-zA-Z]', '', book)			# ditto end of word
+book = re.sub(r'[^a-zA-Z]\'+', ' ', book)			# remove ' at start of word
+book = re.sub(r'\'[^a-zA-Z]', ' ', book)			# ditto end of word
 
 # wow, super ugly: remove extra space at the start of paragraphs and capitalize as needed
 book = re.sub(r'\n.*?(\b[a-zA-Z])', lambda pat: '\n' + pat.group(1).upper(), book)
+
+# also ugly: make sure all sentences are capitalized (may be wrong after some of the regex above...)
+book = re.sub(r'(\.|\?) ([a-z])', lambda pat: pat.group(1) + ' ' + pat.group(2).upper(), book)
+
+# capitalize any characters listed - forms regex as (name|name|name|name)
+if capitalize_characters:
+	book = re.sub(r'\bi(\b|\')', 'I\1', book)														# capitalize 'i'
+	char_regex = '(' + '|'.join(char for char in characters) + ')'			# format regex
+	book = re.sub(char_regex, lambda pat: pat.group(1).title(), book)		# replace!
+
+# fix oddly capitalized letters after apostrophes (catches instances of things like he'Ll too)
+book = re.sub(r'\'([A-Z].*?)\b', lambda pat: '\'' + pat.group(1).lower(), book)
+
+# replace a/an mismatches (if specified)
+if replace_a_an:
+	book = re.sub(r'\b(A|a)\b ([aeiouAEIOU])', r'\1n \2', book)
+	book = re.sub(r'\b(An|an)\b ([^aeiouAEIOU])', lambda pat: pat.group(1)[0] + ' ' + pat.group(2), book)
+
+# fix any missing end-of-paragraph periods
+book = re.sub(r'(\b[^\.]\n+)', r'.\1', book)
 
 # add quotes around what seems like dialog
 if add_dialog_quotes:
@@ -237,6 +266,28 @@ if add_dialog_quotes:
 	book = re.sub(r'\.\W' + pronouns_upper + ' ' + asked + ' ([^\.]*?)\.', r'.\n\n\1 \2, "\3?"\n\n', book)
 
 	book = re.sub(r'"(\b[a-z])', lambda pat: '"' + pat.group(1).upper(), book)
+
+# replace 0-19 with word representation, don't change for chapter #s
+if numbers_as_words:
+	book += re.sub(r'(?<!(chapter)) \b(1)\b', r' one', book)
+	book += re.sub(r'(?<!(chapter)) \b(2)\b', r' two', book)
+	book += re.sub(r'(?<!(chapter)) \b(3)\b', r' three', book)
+	book += re.sub(r'(?<!(chapter)) \b(4)\b', r' four', book)
+	book += re.sub(r'(?<!(chapter)) \b(5)\b', r' five', book)
+	book += re.sub(r'(?<!(chapter)) \b(6)\b', r' six', book)
+	book += re.sub(r'(?<!(chapter)) \b(7)\b', r' seven', book)
+	book += re.sub(r'(?<!(chapter)) \b(8)\b', r' eight', book)
+	book += re.sub(r'(?<!(chapter)) \b(9)\b', r' nine', book)
+	book += re.sub(r'(?<!(chapter)) \b(10)\b', r' ten', book)
+	book += re.sub(r'(?<!(chapter)) \b(11)\b', r' eleven', book)
+	book += re.sub(r'(?<!(chapter)) \b(12)\b', r' twelve', book)
+	book += re.sub(r'(?<!(chapter)) \b(13)\b', r' thirteen', book)
+	book += re.sub(r'(?<!(chapter)) \b(14)\b', r' fourteen', book)
+	book += re.sub(r'(?<!(chapter)) \b(15)\b', r' fifteen', book)
+	book += re.sub(r'(?<!(chapter)) \b(16)\b', r' sixteen', book)
+	book += re.sub(r'(?<!(chapter)) \b(17)\b', r' seventeen', book)
+	book += re.sub(r'(?<!(chapter)) \b(18)\b', r' eighteen', book)
+	book += re.sub(r'(?<!(chapter)) \b(19)\b', r' nineteen', book)
 
 # if specified, add 'END' to book
 if add_end_text:
